@@ -12,7 +12,6 @@ export default function RegistroBecas() {
         rechazadas: 0,
         monto: "$0"
     });
-
     const [registros, setRegistros] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
@@ -22,8 +21,6 @@ export default function RegistroBecas() {
     const fetchData = async () => {
         try {
             setLoading(true);
-
-            // ✅ CORREGIDO: Cambiar esta línea - usar /api/postulaciones en lugar de /api/vista-registros-beca
             const response = await fetch('http://localhost:5000/api/postulaciones');
 
             if (!response.ok) {
@@ -31,7 +28,7 @@ export default function RegistroBecas() {
             }
 
             const data = await response.json();
-            console.log('📊 Datos recibidos:', data); // Para debug
+            console.log('📊 Datos recibidos:', data);
 
             if (Array.isArray(data)) {
                 setRegistros(data);
@@ -42,7 +39,6 @@ export default function RegistroBecas() {
                 const aprobadas = data.filter(reg => reg.status === 'Aprobada' || reg.status === 'Vigente').length;
                 const rechazadas = data.filter(reg => reg.status === 'Rechazada').length;
 
-                // Calcular monto total
                 const montoTotal = data
                     .filter(reg => reg.monto_asignado)
                     .reduce((sum, reg) => sum + parseFloat(reg.monto_asignado || 0), 0);
@@ -80,23 +76,15 @@ export default function RegistroBecas() {
     // Manejar nueva postulación
     const handleNuevaPostulacion = async (postulacion) => {
         try {
-            // Enviar postulación a tu API
             const response = await fetch('http://localhost:5000/api/postulaciones', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(postulacion)
             });
 
-            if (!response.ok) {
-                throw new Error('Error al crear postulación');
-            }
+            if (!response.ok) throw new Error('Error al crear postulación');
 
-            // Recargar datos
             await fetchData();
-
-            // Volver al inicio
             setCurrentView('inicio');
             alert('Postulación creada exitosamente');
 
@@ -107,15 +95,12 @@ export default function RegistroBecas() {
     };
 
     // Manejar cancelación
-    const handleCancelarPostulacion = () => {
-        setCurrentView('inicio');
-    };
+    const handleCancelarPostulacion = () => setCurrentView('inicio');
 
     // Navegar a nueva postulación
-    const handleIrANuevaPostulacion = () => {
-        setCurrentView('nueva-postulacion');
-    };
+    const handleIrANuevaPostulacion = () => setCurrentView('nueva-postulacion');
 
+    // Funciones auxiliares para formateo
     const getStatusClass = (status) => {
         switch (status?.toLowerCase()) {
             case 'aprobada':
@@ -128,41 +113,26 @@ export default function RegistroBecas() {
         }
     };
 
-    // Función para formatear texto de status
     const formatearStatus = (status) => {
         switch (status?.toLowerCase()) {
-            case 'aprobada':
-                return 'Aprobada';
-            case 'vigente':
-                return 'Vigente';
-            case 'pendiente':
-                return 'Pendiente';
-            case 'rechazada':
-                return 'Rechazada';
-            default:
-                return status || 'Desconocido';
+            case 'aprobada': return 'Aprobada';
+            case 'vigente': return 'Vigente';
+            case 'pendiente': return 'Pendiente';
+            case 'rechazada': return 'Rechazada';
+            default: return status || 'Desconocido';
         }
     };
 
-    // Función para formatear fecha
-    const formatearFecha = (fecha) => {
-        if (!fecha) return 'N/A';
-        return new Date(fecha).toLocaleDateString('es-MX');
-    };
+    const formatearFecha = (fecha) => fecha ? new Date(fecha).toLocaleDateString('es-MX') : 'N/A';
 
-    // Función para calcular antigüedad
     const calcularAntiguedad = (fechaAsignacion) => {
         if (!fechaAsignacion) return 'N/A';
-
-        const fechaAsig = new Date(fechaAsignacion);
-        const hoy = new Date();
-        const diffTime = Math.abs(hoy - fechaAsig);
+        const diffTime = Math.abs(new Date() - new Date(fechaAsignacion));
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
         return `${diffDays} días`;
     };
 
-    // Filtrar registros basado en búsqueda y filtro
+    // Filtrar registros
     const filteredRegistros = registros.filter(registro => {
         const coincideBusqueda =
             registro.alumno_nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -178,23 +148,25 @@ export default function RegistroBecas() {
         return coincideBusqueda && coincideFiltro;
     });
 
-    // Función para eliminar registro
+    // Función para eliminar registro REAL
     const handleEliminarRegistro = async (registroId) => {
-        if (window.confirm('¿Estás seguro de que quieres eliminar este registro?')) {
-            try {
-                // Aquí agregarías la llamada DELETE cuando la crees en el backend
-                console.log('Eliminar registro:', registroId);
+        if (!window.confirm("¿Seguro que deseas eliminar esta postulación? Esta acción no se puede deshacer.")) {
+            return;
+        }
 
-                // Por ahora solo eliminamos del estado local
-                setRegistros(prev => prev.filter(reg => reg.id !== registroId));
+        try {
+            const response = await fetch(`http://localhost:5000/api/postulaciones/${registroId}`, {
+                method: "DELETE"
+            });
 
-                // Recargar estadísticas
-                await fetchData();
+            if (!response.ok) throw new Error("Error al eliminar la postulación");
 
-            } catch (error) {
-                console.error('Error eliminando registro:', error);
-                alert('Error al eliminar registro');
-            }
+            alert("Postulación eliminada correctamente.");
+            await fetchData();
+
+        } catch (error) {
+            console.error("Error eliminando postulación:", error);
+            alert("Error eliminando la postulación: " + error.message);
         }
     };
 
@@ -208,7 +180,6 @@ export default function RegistroBecas() {
         );
     }
 
-    // Renderizar vista de Nueva Postulación
     if (currentView === 'nueva-postulacion') {
         return (
             <div className="page-container">
@@ -222,7 +193,7 @@ export default function RegistroBecas() {
         );
     }
 
-    // Renderizar vista principal (Inicio)
+    // Vista principal
     return (
         <div className="page-container">
             <main className="content">
@@ -233,30 +204,11 @@ export default function RegistroBecas() {
 
                 {/* Estadísticas */}
                 <div className="stats-grid">
-                    <div className="stat-card">
-                        <div className="stat-number">{statsData.total}</div>
-                        <div className="stat-label">Total Registros</div>
-                    </div>
-
-                    <div className="stat-card">
-                        <div className="stat-number">{statsData.pendientes}</div>
-                        <div className="stat-label">Pendientes</div>
-                    </div>
-
-                    <div className="stat-card">
-                        <div className="stat-number">{statsData.aprobadas}</div>
-                        <div className="stat-label">Aprobadas</div>
-                    </div>
-
-                    <div className="stat-card">
-                        <div className="stat-number">{statsData.rechazadas}</div>
-                        <div className="stat-label">Rechazadas</div>
-                    </div>
-
-                    <div className="stat-card amount-card">
-                        <div className="stat-number amount-text">{statsData.monto}</div>
-                        <div className="stat-label">Monto Asignado</div>
-                    </div>
+                    <div className="stat-card"><div className="stat-number">{statsData.total}</div><div className="stat-label">Total Registros</div></div>
+                    <div className="stat-card"><div className="stat-number">{statsData.pendientes}</div><div className="stat-label">Pendientes</div></div>
+                    <div className="stat-card"><div className="stat-number">{statsData.aprobadas}</div><div className="stat-label">Aprobadas</div></div>
+                    <div className="stat-card"><div className="stat-number">{statsData.rechazadas}</div><div className="stat-label">Rechazadas</div></div>
+                    <div className="stat-card amount-card"><div className="stat-number amount-text">{statsData.monto}</div><div className="stat-label">Monto Asignado</div></div>
                 </div>
 
                 {/* Barra de acciones */}
@@ -280,15 +232,12 @@ export default function RegistroBecas() {
                         <option value="pendientes">Pendientes</option>
                         <option value="rechazadas">Rechazadas</option>
                     </select>
-                    <button
-                        className="new-post-btn"
-                        onClick={handleIrANuevaPostulacion}
-                    >
+                    <button className="new-post-btn" onClick={handleIrANuevaPostulacion}>
                         + Nueva Postulación
                     </button>
                 </div>
 
-                {/* Tabla de registros */}
+                {/* Tabla */}
                 <div className="table-card">
                     <div className="table-header">
                         <span className="table-title">Registros de Becas</span>
@@ -296,9 +245,7 @@ export default function RegistroBecas() {
                     </div>
 
                     {filteredRegistros.length === 0 ? (
-                        <div className="empty-state">
-                            <p>No hay registros de becas</p>
-                        </div>
+                        <div className="empty-state"><p>No hay registros de becas</p></div>
                     ) : (
                         <table className="styled-table">
                             <thead>
@@ -317,18 +264,12 @@ export default function RegistroBecas() {
                                 {filteredRegistros.map((registro) => (
                                     <tr key={registro.id}>
                                         <td className="alumno-cell">
-                                            <div className="alumno-name">
-                                                {registro.alumno_nombre || 'N/A'}
-                                            </div>
-                                            <div className="oid-text">
-                                                Matrícula: {registro.matricula || 'N/A'}
-                                            </div>
+                                            <div className="alumno-name">{registro.alumno_nombre || 'N/A'}</div>
+                                            <div className="oid-text">Matrícula: {registro.matricula || 'N/A'}</div>
                                         </td>
                                         <td>
                                             <div>{registro.nombre_programa || 'N/A'}</div>
-                                            <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                                                {registro.tipo_beca || 'N/A'}
-                                            </div>
+                                            <div style={{ fontSize: '12px', color: '#6b7280' }}>{registro.tipo_beca || 'N/A'}</div>
                                         </td>
                                         <td>{formatearFecha(registro.fecha_postulacion)}</td>
                                         <td>{formatearFecha(registro.fecha_asignacion)}</td>

@@ -7,6 +7,7 @@ const Responsables = () => {
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [showForm, setShowForm] = useState(false);
+    const [eliminando, setEliminando] = useState(false); // ← NUEVO
 
     // Estado para el formulario de nuevo tutor
     const [nuevoTutor, setNuevoTutor] = useState({
@@ -99,17 +100,39 @@ const Responsables = () => {
         }
     };
 
-    // Eliminar tutor
+    // ⭐⭐ ELIMINAR TUTOR (COMPLETO Y REAL) ⭐⭐
     const handleEliminarTutor = async (tutorId) => {
-        if (window.confirm('¿Estás seguro de que quieres eliminar este tutor?')) {
+        if (window.confirm('¿Estás seguro de que quieres eliminar este responsable? Esta acción no se puede deshacer.')) {
+            setEliminando(true);
+
             try {
-                // Aquí agregarías la llamada DELETE cuando la crees en el backend
-                console.log('Eliminar tutor:', tutorId);
-                // Por ahora solo eliminamos del estado local
+                console.log("🗑️ Eliminando tutor ID:", tutorId);
+
+                const response = await fetch(`http://localhost:5000/api/tutores/${tutorId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `Error ${response.status}`);
+                }
+
+                const resultado = await response.json();
+                console.log("✅ Tutor eliminado:", resultado);
+
+                // Actualizar lista
                 setTutores(prev => prev.filter(tutor => tutor.id !== tutorId));
+
+                alert("Responsable eliminado exitosamente");
+
             } catch (error) {
-                console.error('Error eliminando tutor:', error);
-                alert('Error al eliminar tutor');
+                console.error("❌ Error eliminando responsable:", error);
+                alert("Error al eliminar responsable: " + error.message);
+            } finally {
+                setEliminando(false);
             }
         }
     };
@@ -132,13 +155,14 @@ const Responsables = () => {
 
     return (
         <div className="responsables-container">
+
             {/* Header */}
             <div className="responsables-header">
                 <h1>Gestión de Responsables</h1>
                 <p>Registro y administración de tutores/responsables</p>
             </div>
 
-            {/* Barra de búsqueda y botones */}
+            {/* Barra de búsqueda */}
             <div className="controls-bar">
                 <div className="search-bar">
                     <input
@@ -232,9 +256,7 @@ const Responsables = () => {
                                 <button type="button" onClick={() => setShowForm(false)}>
                                     Cancelar
                                 </button>
-                                <button type="submit" className="btn-primary">
-                                    Guardar Responsable
-                                </button>
+                                <button type="submit" className="btn-primary">Guardar Responsable</button>
                             </div>
                         </form>
                     </div>
@@ -277,13 +299,17 @@ const Responsables = () => {
                                     </td>
                                     <td className="acciones">
                                         <button className="btn-editar" title="Editar">✏️</button>
+
+                                        {/* BOTÓN DE ELIMINAR */}
                                         <button
                                             className="btn-eliminar"
                                             title="Eliminar"
                                             onClick={() => handleEliminarTutor(tutor.id)}
+                                            disabled={eliminando}
                                         >
-                                            🗑️
+                                            {eliminando ? "⏳" : "🗑️"}
                                         </button>
+
                                         <button className="btn-ver" title="Ver detalles">👁️</button>
                                     </td>
                                 </tr>
