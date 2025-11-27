@@ -80,6 +80,42 @@ app.get('/api/alumnos', async (req, res) => {
     }
 });
 
+app.get('/api/alumnos/:id', async (req, res) => {
+    try {
+        const alumnoId = parseInt(req.params.id);
+        console.log('🔍 Solicitando alumno ID:', alumnoId);
+
+        const result = await pool.query(`
+            SELECT 
+                p.id,
+                p.nombre,
+                p.edad,
+                (p.contacto).correo as email,
+                (p.contacto).telefono,
+                (p.contacto).direccion,
+                a.grupo,
+                a.carrera,
+                a.promedio,
+                a.matricula,
+                a.tutor_id
+            FROM sistema_becas.Persona p
+            JOIN sistema_becas.Alumno a ON p.id = a.persona_id
+            WHERE p.id = $1
+        `, [alumnoId]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Alumno no encontrado' });
+        }
+
+        console.log('✅ Alumno encontrado:', result.rows[0]);
+        res.json(result.rows[0]);
+
+    } catch (err) {
+        console.error('❌ Error en GET /api/alumnos/:id:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.post('/api/alumnos', async (req, res) => {
     try {
         console.log('📥 Recibiendo datos para nuevo alumno:', req.body);
@@ -139,6 +175,56 @@ app.post('/api/alumnos', async (req, res) => {
     }
 });
 
+// 📝 RUTA PARA ACTUALIZAR ALUMNOS
+app.put('/api/alumnos/:id', async (req, res) => {
+    try {
+        const alumnoId = parseInt(req.params.id);
+        const { nombre, edad, email, telefono, direccion, grupo, carrera, promedio, matricula, tutor_id } = req.body;
+
+        console.log('✏️ Actualizando alumno ID:', alumnoId, 'con datos:', req.body);
+
+        const client = await pool.connect();
+
+        try {
+            await client.query('BEGIN');
+
+            // 1. Actualizar Persona
+            await client.query(
+                `UPDATE sistema_becas.Persona 
+                 SET nombre = $1, edad = $2, contacto = ROW($3, $4, $5)::sistema_becas.TipoContacto
+                 WHERE id = $6`,
+                [nombre, edad, email, telefono, direccion, alumnoId]
+            );
+
+            // 2. Actualizar Alumno
+            await client.query(
+                `UPDATE sistema_becas.Alumno 
+                 SET grupo = $1, carrera = $2, promedio = $3, matricula = $4, tutor_id = $5
+                 WHERE persona_id = $6`,
+                [grupo, carrera, promedio, matricula, tutor_id, alumnoId]
+            );
+
+            await client.query('COMMIT');
+
+            console.log('✅ Alumno actualizado correctamente ID:', alumnoId);
+            res.json({
+                message: 'Alumno actualizado exitosamente',
+                alumno_id: alumnoId
+            });
+
+        } catch (updateError) {
+            await client.query('ROLLBACK');
+            throw updateError;
+        } finally {
+            client.release();
+        }
+
+    } catch (err) {
+        console.error('❌ Error en PUT /api/alumnos/:id:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.delete('/api/alumnos/:id', async (req, res) => {
     try {
         const alumnoId = parseInt(req.params.id);
@@ -185,6 +271,29 @@ app.get('/api/programas-beca', async (req, res) => {
     }
 });
 
+app.get('/api/programas-beca/:id', async (req, res) => {
+    try {
+        const programaId = parseInt(req.params.id);
+        console.log('🔍 Solicitando programa ID:', programaId);
+
+        const result = await pool.query(
+            'SELECT * FROM sistema_becas.ProgramaBeca WHERE id = $1',
+            [programaId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Programa no encontrado' });
+        }
+
+        console.log('✅ Programa encontrado:', result.rows[0]);
+        res.json(result.rows[0]);
+
+    } catch (err) {
+        console.error('❌ Error en GET /api/programas-beca/:id:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.post('/api/programas-beca', async (req, res) => {
     try {
         const { nombre_programa, monto, tipo_beca, porcentaje, promedio_minimo, requisitos } = req.body;
@@ -199,6 +308,38 @@ app.post('/api/programas-beca', async (req, res) => {
         res.json(result.rows[0]);
     } catch (err) {
         console.error('❌ Error creando programa:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 📝 RUTA PARA ACTUALIZAR PROGRAMAS DE BECA
+app.put('/api/programas-beca/:id', async (req, res) => {
+    try {
+        const programaId = parseInt(req.params.id);
+        const { nombre_programa, monto, tipo_beca, porcentaje, promedio_minimo, requisitos } = req.body;
+
+        console.log('✏️ Actualizando programa ID:', programaId, 'con datos:', req.body);
+
+        const result = await pool.query(
+            `UPDATE sistema_becas.ProgramaBeca 
+             SET nombre_programa = $1, monto = $2, tipo_beca = $3, 
+                 porcentaje = $4, promedio_minimo = $5, requisitos = $6
+             WHERE id = $7 RETURNING *`,
+            [nombre_programa, monto, tipo_beca, porcentaje, promedio_minimo, requisitos, programaId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Programa no encontrado' });
+        }
+
+        console.log('✅ Programa actualizado correctamente ID:', programaId);
+        res.json({
+            message: 'Programa actualizado exitosamente',
+            programa: result.rows[0]
+        });
+
+    } catch (err) {
+        console.error('❌ Error en PUT /api/programas-beca/:id:', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -238,6 +379,29 @@ app.get('/api/tutores', async (req, res) => {
     }
 });
 
+app.get('/api/tutores/:id', async (req, res) => {
+    try {
+        const tutorId = parseInt(req.params.id);
+        console.log('🔍 Solicitando tutor ID:', tutorId);
+
+        const result = await pool.query(
+            'SELECT * FROM sistema_becas.Tutor WHERE id = $1',
+            [tutorId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Tutor no encontrado' });
+        }
+
+        console.log('✅ Tutor encontrado:', result.rows[0]);
+        res.json(result.rows[0]);
+
+    } catch (err) {
+        console.error('❌ Error en GET /api/tutores/:id:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.post('/api/tutores', async (req, res) => {
     try {
         const { nombre, ciudad, telefono, parentesco } = req.body;
@@ -251,6 +415,37 @@ app.post('/api/tutores', async (req, res) => {
         res.json(result.rows[0]);
     } catch (err) {
         console.error('❌ Error creando tutor:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 📝 RUTA PARA ACTUALIZAR TUTORES
+app.put('/api/tutores/:id', async (req, res) => {
+    try {
+        const tutorId = parseInt(req.params.id);
+        const { nombre, ciudad, telefono, parentesco } = req.body;
+
+        console.log('✏️ Actualizando tutor ID:', tutorId, 'con datos:', req.body);
+
+        const result = await pool.query(
+            `UPDATE sistema_becas.Tutor 
+             SET nombre = $1, ciudad = $2, telefono = $3, parentesco = $4
+             WHERE id = $5 RETURNING *`,
+            [nombre, ciudad, telefono, parentesco, tutorId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Tutor no encontrado' });
+        }
+
+        console.log('✅ Tutor actualizado correctamente ID:', tutorId);
+        res.json({
+            message: 'Tutor actualizado exitosamente',
+            tutor: result.rows[0]
+        });
+
+    } catch (err) {
+        console.error('❌ Error en PUT /api/tutores/:id:', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -306,6 +501,45 @@ app.get('/api/postulaciones', async (req, res) => {
     }
 });
 
+app.get('/api/postulaciones/:id', async (req, res) => {
+    try {
+        const postulacionId = parseInt(req.params.id);
+        console.log('🔍 Solicitando postulación ID:', postulacionId);
+
+        const result = await pool.query(`
+            SELECT 
+                rb.id,
+                rb.alumno_id,
+                rb.programa_id,
+                rb.fecha_postulacion,
+                rb.fecha_asignacion,
+                rb.status,
+                rb.monto_asignado,
+                rb.observaciones,
+                p.nombre as alumno_nombre,
+                a.matricula,
+                pb.nombre_programa,
+                pb.tipo_beca
+            FROM sistema_becas.RegistroBeca rb
+            JOIN sistema_becas.Alumno a ON rb.alumno_id = a.persona_id
+            JOIN sistema_becas.Persona p ON a.persona_id = p.id
+            JOIN sistema_becas.ProgramaBeca pb ON rb.programa_id = pb.id
+            WHERE rb.id = $1
+        `, [postulacionId]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Postulación no encontrada' });
+        }
+
+        console.log('✅ Postulación encontrada:', result.rows[0]);
+        res.json(result.rows[0]);
+
+    } catch (err) {
+        console.error('❌ Error en GET /api/postulaciones/:id:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.post('/api/postulaciones', async (req, res) => {
     try {
         const { alumno_id, programa_id, estado, observaciones } = req.body;
@@ -326,6 +560,87 @@ app.post('/api/postulaciones', async (req, res) => {
 
     } catch (err) {
         console.error('❌ Error creando postulación:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 📝 RUTA PARA ACTUALIZAR POSTULACIONES
+app.put('/api/postulaciones/:id', async (req, res) => {
+    try {
+        const postulacionId = parseInt(req.params.id);
+        const { alumno_id, programa_id, status, monto_asignado, observaciones, fecha_asignacion } = req.body;
+
+        console.log('✏️ Actualizando postulación ID:', postulacionId, 'con datos:', req.body);
+
+        // Construir la consulta dinámicamente
+        let updateFields = [];
+        let values = [];
+        let paramCount = 1;
+
+        if (alumno_id !== undefined) {
+            updateFields.push(`alumno_id = $${paramCount}`);
+            values.push(alumno_id);
+            paramCount++;
+        }
+
+        if (programa_id !== undefined) {
+            updateFields.push(`programa_id = $${paramCount}`);
+            values.push(programa_id);
+            paramCount++;
+        }
+
+        if (status !== undefined) {
+            updateFields.push(`status = $${paramCount}`);
+            values.push(status);
+            paramCount++;
+        }
+
+        if (monto_asignado !== undefined) {
+            updateFields.push(`monto_asignado = $${paramCount}`);
+            values.push(monto_asignado);
+            paramCount++;
+        }
+
+        if (observaciones !== undefined) {
+            updateFields.push(`observaciones = $${paramCount}`);
+            values.push(observaciones);
+            paramCount++;
+        }
+
+        if (fecha_asignacion !== undefined) {
+            updateFields.push(`fecha_asignacion = $${paramCount}`);
+            values.push(fecha_asignacion);
+            paramCount++;
+        }
+
+        if (updateFields.length === 0) {
+            return res.status(400).json({ error: 'No hay campos para actualizar' });
+        }
+
+        // Agregar el ID al final
+        values.push(postulacionId);
+
+        const query = `
+            UPDATE sistema_becas.RegistroBeca 
+            SET ${updateFields.join(', ')}, fecha_actualizacion = CURRENT_TIMESTAMP
+            WHERE id = $${paramCount}
+            RETURNING *
+        `;
+
+        const result = await pool.query(query, values);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Postulación no encontrada' });
+        }
+
+        console.log('✅ Postulación actualizada correctamente ID:', postulacionId);
+        res.json({
+            message: 'Postulación actualizada exitosamente',
+            postulacion: result.rows[0]
+        });
+
+    } catch (err) {
+        console.error('❌ Error actualizando postulación:', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -437,19 +752,27 @@ app.listen(PORT, () => {
     console.log(`📊 Endpoints completos:`);
     console.log(`   ALUMNOS:`);
     console.log(`     GET    http://localhost:${PORT}/api/alumnos`);
+    console.log(`     GET    http://localhost:${PORT}/api/alumnos/:id`);
     console.log(`     POST   http://localhost:${PORT}/api/alumnos`);
+    console.log(`     PUT    http://localhost:${PORT}/api/alumnos/:id`);
     console.log(`     DELETE http://localhost:${PORT}/api/alumnos/:id`);
     console.log(`   PROGRAMAS:`);
     console.log(`     GET    http://localhost:${PORT}/api/programas-beca`);
+    console.log(`     GET    http://localhost:${PORT}/api/programas-beca/:id`);
     console.log(`     POST   http://localhost:${PORT}/api/programas-beca`);
+    console.log(`     PUT    http://localhost:${PORT}/api/programas-beca/:id`);
     console.log(`     DELETE http://localhost:${PORT}/api/programas-beca/:id`);
     console.log(`   TUTORES:`);
     console.log(`     GET    http://localhost:${PORT}/api/tutores`);
+    console.log(`     GET    http://localhost:${PORT}/api/tutores/:id`);
     console.log(`     POST   http://localhost:${PORT}/api/tutores`);
+    console.log(`     PUT    http://localhost:${PORT}/api/tutores/:id`);
     console.log(`     DELETE http://localhost:${PORT}/api/tutores/:id`);
     console.log(`   POSTULACIONES:`);
     console.log(`     GET    http://localhost:${PORT}/api/postulaciones`);
+    console.log(`     GET    http://localhost:${PORT}/api/postulaciones/:id`);
     console.log(`     POST   http://localhost:${PORT}/api/postulaciones`);
+    console.log(`     PUT    http://localhost:${PORT}/api/postulaciones/:id`);
     console.log(`     DELETE http://localhost:${PORT}/api/postulaciones/:id`);
     console.log(`   OTROS:`);
     console.log(`     GET    http://localhost:${PORT}/api/dashboard`);
