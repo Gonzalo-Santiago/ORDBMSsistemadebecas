@@ -1,0 +1,185 @@
+/* alumnos.css - Estilos completos para la página de Alumnos */
+
+.page-container {
+    font-family: "Inter", sans-serif;
+    background: #f5f7fa;
+    min-height: 100vh;
+    padding-top: 80px;
+}
+
+.content {
+    padding: 30px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.header-section {
+    margin-bottom: 30px;
+}
+
+.main-title {
+    font-size: 28px;
+    font-weight: bold;
+    color: #1a1f36;
+    margin: 0;
+}
+
+.main-subtitle {
+    font-size: 16px;
+    color: #6b7280;
+    margin: 5px 0 0 0;
+}
+
+/* Barra de acciones */
+.actions-bar {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+    align-items: center;
+}
+
+.search-input {
+    flex: 1;
+    padding: 12px 15px;
+    border-radius: 10px;
+    border: 1px solid #d0d7e2;
+    font-size: 14px;
+}
+
+.new-post-btn {
+    background: #1b73e8;
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.new-post-btn:hover {
+    background: #1557b0;
+}
+
+/* Tabla */
+.table-card {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.table-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #1a1f36;
+}
+
+.table-count {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.styled-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    font-size: 14px;
+}
+
+.styled-table th {
+    background: #f8fafc;
+    padding: 15px 12px;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.styled-table td {
+    padding: 15px 12px;
+    border-bottom: 1px solid #e5e7eb;
+    color: #4b5563;
+}
+
+/* Estados vacíos */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6b7280;
+    font-style: italic;
+    font-size: 16px;
+}
+
+/* Badges de estado */
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-active {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-inactive {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-pending {
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+/* Acciones */
+.action-icons {
+    display: flex;
+    gap: 10px;
+}
+
+.action-icons span {
+    cursor: pointer;
+    font-size: 16px;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.action-icons span:hover {
+    opacity: 1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .content {
+        padding: 20px 15px;
+    }
+
+    .actions-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .search-input,
+    .new-post-btn {
+        width: 100%;
+    }
+
+    .table-card {
+        overflow-x: auto;
+    }
+
+    .styled-table {
+        min-width: 800px;
+    }
+}

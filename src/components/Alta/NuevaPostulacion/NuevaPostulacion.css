@@ -1,0 +1,257 @@
+/* Contenedor general centrado (del primer código) */
+.nueva-postulacion-page {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Contenedor principal (estilo del segundo código, tamaño grande del primero) */
+.nueva-postulacion-container {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    /* tamaño original del contenedor grande */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    margin-top: 20px;
+    /* del primer código */
+}
+
+/* OPCIONAL: contenedor pequeño (igual al segundo CSS) */
+.nueva-postulacion-container.small {
+    padding: 25px;
+    height: fit-content;
+}
+
+/* ---------------------------- */
+/* Header */
+/* ---------------------------- */
+
+.form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.form-header h3,
+.main-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1a1f36;
+    margin: 0;
+}
+
+.main-subtitle {
+    font-size: 16px;
+    color: #6b7280;
+    margin: 5px 0 0 0;
+}
+
+/* Close button */
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #6b7280;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+    background-color: #f3f4f6;
+    color: #374151;
+}
+
+/* ---------------------------- */
+/* Form */
+/* ---------------------------- */
+
+.postulacion-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #374151;
+    font-size: 14px;
+}
+
+.form-group select,
+.form-group textarea {
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    background-color: white;
+    font-family: "Inter", sans-serif;
+}
+
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #1b73e8;
+    box-shadow: 0 0 0 3px rgba(27, 115, 232, 0.1);
+}
+
+.form-group select.error {
+    border-color: #dc2626;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.error-message {
+    color: #dc2626;
+    font-size: 12px;
+    margin-top: 4px;
+    font-weight: 500;
+}
+
+/* ---------------------------- */
+/* Info Box */
+• ---------------------------- */ .verificacion-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    background-color: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 8px;
+    margin: 10px 0;
+}
+
+.info-icon {
+    font-size: 16px;
+    margin-top: 2px;
+}
+
+.info-text {
+    font-size: 13px;
+    color: #0369a1;
+    line-height: 1.4;
+}
+
+.info-text strong {
+    color: #075985;
+}
+
+/* ---------------------------- */
+/* Buttons */
+/* ---------------------------- */
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.btn-cancelar,
+.btn-postular {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 120px;
+    font-family: "Inter", sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-cancelar {
+    background-color: #6b7280;
+    color: white;
+}
+
+.btn-cancelar:hover:not(:disabled) {
+    background-color: #4b5563;
+}
+
+.btn-postular {
+    background-color: #1b73e8;
+    color: white;
+}
+
+.btn-postular:hover:not(:disabled) {
+    background-color: #1557b0;
+}
+
+.btn-cancelar:disabled,
+.btn-postular:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-cancelar:active:not(:disabled),
+.btn-postular:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.loading-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* ---------------------------- */
+/* Responsive */
+/* ---------------------------- */
+
+@media (max-width: 768px) {
+    .nueva-postulacion-container {
+        padding: 20px;
+    }
+
+    .nueva-postulacion-container.small {
+        padding: 18px;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .btn-cancelar,
+    .btn-postular {
+        width: 100%;
+    }
+
+    .verificacion-info {
+        flex-direction: column;
+        text-align: center;
+    }
+}
