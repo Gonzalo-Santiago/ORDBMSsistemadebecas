@@ -1,15 +1,51 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './NuevaPostulacion.css';
 
 const NuevaPostulacion = ({ onPostular, onCancelar }) => {
     const [formData, setFormData] = useState({
-        alumnoId: '',
-        programaId: '',
+        alumno_id: '',  // Cambiado a alumno_id para coincidir con tu API
+        programa_id: '', // Cambiado a programa_id para coincidir con tu API
         observaciones: ''
     });
 
+    const [alumnos, setAlumnos] = useState([]);
+    const [programas, setProgramas] = useState([]);
     const [errors, setErrors] = useState({});
     const [isVerificando, setIsVerificando] = useState(false);
+    const [loading, setLoading] = useState(true);
+
+    // Cargar alumnos y programas desde la API
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+
+                // Cargar alumnos y programas en paralelo
+                const [alumnosRes, programasRes] = await Promise.all([
+                    fetch('http://localhost:5000/api/alumnos'),
+                    fetch('http://localhost:5000/api/programas-beca')
+                ]);
+
+                if (!alumnosRes.ok || !programasRes.ok) {
+                    throw new Error('Error al cargar datos');
+                }
+
+                const alumnosData = await alumnosRes.json();
+                const programasData = await programasRes.json();
+
+                setAlumnos(alumnosData);
+                setProgramas(programasData);
+                setLoading(false);
+
+            } catch (error) {
+                console.error('Error cargando datos:', error);
+                alert('Error al cargar datos: ' + error.message);
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -26,26 +62,55 @@ const NuevaPostulacion = ({ onPostular, onCancelar }) => {
         }
     };
 
-    const verificarRequisitos = async () => {
-        setIsVerificando(true);
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                setIsVerificando(false);
-                const cumpleRequisitos = Math.random() > 0.3;
-                resolve(cumpleRequisitos);
-            }, 1500);
-        });
+    const verificarRequisitos = async (alumnoId, programaId) => {
+        try {
+            // Usar tu función de verificación de requisitos del backend
+            const response = await fetch(`http://localhost:5000/api/verificar-requisitos`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    alumno_id: parseInt(alumnoId),
+                    programa_id: parseInt(programaId)
+                })
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                return result.cumple_requisitos;
+            } else {
+                // Si no existe el endpoint, hacer verificación básica
+                const alumno = alumnos.find(a => a.id === parseInt(alumnoId));
+                const programa = programas.find(p => p.id === parseInt(programaId));
+
+                if (alumno && programa) {
+                    return alumno.promedio >= programa.promedio_minimo;
+                }
+                return false;
+            }
+        } catch (error) {
+            console.error('Error verificando requisitos:', error);
+            // Verificación básica como fallback
+            const alumno = alumnos.find(a => a.id === parseInt(alumnoId));
+            const programa = programas.find(p => p.id === parseInt(programaId));
+
+            if (alumno && programa) {
+                return alumno.promedio >= (programa.promedio_minimo || 0);
+            }
+            return false;
+        }
     };
 
     const validateForm = () => {
         const newErrors = {};
 
-        if (!formData.alumnoId) {
-            newErrors.alumnoId = 'Debe seleccionar un alumno';
+        if (!formData.alumno_id) {
+            newErrors.alumno_id = 'Debe seleccionar un alumno';
         }
 
-        if (!formData.programaId) {
-            newErrors.programaId = 'Debe seleccionar un programa de beca';
+        if (!formData.programa_id) {
+            newErrors.programa_id = 'Debe seleccionar un programa de beca';
         }
 
         setErrors(newErrors);
@@ -58,14 +123,16 @@ const NuevaPostulacion = ({ onPostular, onCancelar }) => {
         if (!validateForm()) return;
 
         try {
-            const cumpleRequisitos = await verificarRequisitos();
+            setIsVerificando(true);
+
+            const cumpleRequisitos = await verificarRequisitos(formData.alumno_id, formData.programa_id);
 
             if (cumpleRequisitos) {
                 const postulacion = {
-                    id: Date.now(),
-                    ...formData,
-                    fechaPostulacion: new Date().toLocaleDateString(),
-                    status: 'pendiente'
+                    alumno_id: parseInt(formData.alumno_id),
+                    programa_id: parseInt(formData.programa_id),
+                    observaciones: formData.observaciones,
+                    estado: 'Pendiente'  // Usar 'estado' en lugar de 'status' si es necesario
                 };
 
                 onPostular(postulacion);
@@ -75,6 +142,8 @@ const NuevaPostulacion = ({ onPostular, onCancelar }) => {
         } catch (error) {
             console.error('Error al verificar requisitos:', error);
             alert('Error al verificar los requisitos. Intente nuevamente.');
+        } finally {
+            setIsVerificando(false);
         }
     };
 
@@ -83,6 +152,14 @@ const NuevaPostulacion = ({ onPostular, onCancelar }) => {
             onCancelar();
         }
     };
+
+    if (loading) {
+        return (
+            <div className="nueva-postulacion-page">
+                <div className="loading">Cargando datos...</div>
+            </div>
+        );
+    }
 
     return (
         <div className="nueva-postulacion-page">
@@ -94,42 +171,50 @@ const NuevaPostulacion = ({ onPostular, onCancelar }) => {
             <div className="nueva-postulacion-container">
                 <form onSubmit={handleSubmit} className="postulacion-form">
                     <div className="form-group">
-                        <label htmlFor="alumnoId">
-                            Alumno (OID Referencia) *
+                        <label htmlFor="alumno_id">
+                            Alumno *
                         </label>
                         <select
-                            id="alumnoId"
-                            name="alumnoId"
-                            value={formData.alumnoId}
+                            id="alumno_id"
+                            name="alumno_id"
+                            value={formData.alumno_id}
                             onChange={handleChange}
-                            className={errors.alumnoId ? 'error' : ''}
+                            className={errors.alumno_id ? 'error' : ''}
                             disabled={isVerificando}
                         >
                             <option value="">Seleccionar alumno</option>
-                            {/* Los datos de alumnos vendrán de tu API */}
+                            {alumnos.map(alumno => (
+                                <option key={alumno.id} value={alumno.id}>
+                                    {alumno.nombre} - {alumno.matricula} (Promedio: {alumno.promedio ? parseFloat(alumno.promedio).toFixed(2) : 'N/A'})
+                                </option>
+                            ))}
                         </select>
-                        {errors.alumnoId && (
-                            <span className="error-message">{errors.alumnoId}</span>
+                        {errors.alumno_id && (
+                            <span className="error-message">{errors.alumno_id}</span>
                         )}
                     </div>
 
                     <div className="form-group">
-                        <label htmlFor="programaId">
-                            Programa de Beca (OID Referencia) *
+                        <label htmlFor="programa_id">
+                            Programa de Beca *
                         </label>
                         <select
-                            id="programaId"
-                            name="programaId"
-                            value={formData.programaId}
+                            id="programa_id"
+                            name="programa_id"
+                            value={formData.programa_id}
                             onChange={handleChange}
-                            className={errors.programaId ? 'error' : ''}
+                            className={errors.programa_id ? 'error' : ''}
                             disabled={isVerificando}
                         >
                             <option value="">Seleccionar programa</option>
-                            {/* Los datos de programas vendrán de tu API */}
+                            {programas.map(programa => (
+                                <option key={programa.id} value={programa.id}>
+                                    {programa.nombre_programa} - {programa.tipo_beca} (Mín: {programa.promedio_minimo || 0})
+                                </option>
+                            ))}
                         </select>
-                        {errors.programaId && (
-                            <span className="error-message">{errors.programaId}</span>
+                        {errors.programa_id && (
+                            <span className="error-message">{errors.programa_id}</span>
                         )}
                     </div>
 
@@ -167,7 +252,7 @@ const NuevaPostulacion = ({ onPostular, onCancelar }) => {
                             {isVerificando ? (
                                 <>
                                     <div className="loading-spinner"></div>
-                                    Verificando...
+                                    Verificando requisitos...
                                 </>
                             ) : (
                                 'Postular a Beca'

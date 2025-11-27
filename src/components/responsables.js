@@ -1,96 +1,299 @@
-// responsables.js
-import React, { useState } from "react";
-import NuevoResponsable from "./Alta/NuevoResponsable/NuevoResponsable";
-import "./responsables.css";
+import React, { useState, useEffect } from 'react';
+import './responsables.css';
 
-export default function Responsables() {
-    const [mostrarFormulario, setMostrarFormulario] = useState(false);
-    const [responsables, setResponsables] = useState([]);
+const Responsables = () => {
+    const [tutores, setTutores] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [showForm, setShowForm] = useState(false);
 
-    const handleNuevoResponsable = () => {
-        setMostrarFormulario(true);
+    // Estado para el formulario de nuevo tutor
+    const [nuevoTutor, setNuevoTutor] = useState({
+        nombre: '',
+        ciudad: '',
+        telefono: '',
+        parentesco: 'Padre/Madre'
+    });
+
+    // Cargar tutores desde el backend
+    useEffect(() => {
+        const fetchTutores = async () => {
+            try {
+                const response = await fetch('http://localhost:5000/api/tutores');
+
+                if (!response.ok) {
+                    throw new Error(`Error: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (Array.isArray(data)) {
+                    setTutores(data);
+                } else {
+                    console.error('La API no devolvió un array:', data);
+                    setTutores([]);
+                }
+
+                setLoading(false);
+            } catch (error) {
+                console.error('Error cargando tutores:', error);
+                setError(error.message);
+                setLoading(false);
+            }
+        };
+
+        fetchTutores();
+    }, []);
+
+    // Filtrar tutores basado en la búsqueda
+    const filteredTutores = tutores.filter(tutor =>
+        tutor.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        tutor.ciudad?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        tutor.parentesco?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    // Manejar cambio en el formulario
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setNuevoTutor(prev => ({
+            ...prev,
+            [name]: value
+        }));
     };
 
-    const handleCancelar = () => {
-        setMostrarFormulario(false);
+    // Crear nuevo tutor
+    const handleCrearTutor = async (e) => {
+        e.preventDefault();
+        try {
+            const response = await fetch('http://localhost:5000/api/tutores', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(nuevoTutor)
+            });
+
+            if (!response.ok) {
+                throw new Error('Error al crear tutor');
+            }
+
+            const tutorCreado = await response.json();
+
+            // Agregar el nuevo tutor a la lista
+            setTutores(prev => [tutorCreado, ...prev]);
+
+            // Resetear formulario
+            setNuevoTutor({
+                nombre: '',
+                ciudad: '',
+                telefono: '',
+                parentesco: 'Padre/Madre'
+            });
+
+            setShowForm(false);
+
+        } catch (error) {
+            console.error('Error creando tutor:', error);
+            alert('Error al crear tutor: ' + error.message);
+        }
     };
 
-    const handleGuardarResponsable = (datosResponsable) => {
-        console.log("Guardando responsable:", datosResponsable);
-        setResponsables(prev => [...prev, { ...datosResponsable, id: Date.now() }]);
-        setMostrarFormulario(false);
+    // Eliminar tutor
+    const handleEliminarTutor = async (tutorId) => {
+        if (window.confirm('¿Estás seguro de que quieres eliminar este tutor?')) {
+            try {
+                // Aquí agregarías la llamada DELETE cuando la crees en el backend
+                console.log('Eliminar tutor:', tutorId);
+                // Por ahora solo eliminamos del estado local
+                setTutores(prev => prev.filter(tutor => tutor.id !== tutorId));
+            } catch (error) {
+                console.error('Error eliminando tutor:', error);
+                alert('Error al eliminar tutor');
+            }
+        }
     };
 
-    if (mostrarFormulario) {
-        return <NuevoResponsable onCancel={handleCancelar} onSave={handleGuardarResponsable} />;
+    if (loading) {
+        return (
+            <div className="responsables-container">
+                <div className="loading">Cargando responsables...</div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="responsables-container">
+                <div className="error">Error: {error}</div>
+            </div>
+        );
     }
 
     return (
-        <div className="page-container">
-            <main className="content">
-                <div className="header-section">
-                    <h1 className="main-title">Gestión de Responsables</h1>
-                    <p className="main-subtitle">Registro y administración de padres, madres y tutores</p>
-                </div>
+        <div className="responsables-container">
+            {/* Header */}
+            <div className="responsables-header">
+                <h1>Gestión de Responsables</h1>
+                <p>Registro y administración de tutores/responsables</p>
+            </div>
 
-                <div className="actions-bar">
+            {/* Barra de búsqueda y botones */}
+            <div className="controls-bar">
+                <div className="search-bar">
                     <input
                         type="text"
-                        placeholder="Buscar por nombre, teléfono o parentesco..."
+                        placeholder="Buscar por nombre, ciudad o parentesco..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
                         className="search-input"
                     />
-                    <button className="new-post-btn" onClick={handleNuevoResponsable}>
-                        + Nuevo Responsable
-                    </button>
                 </div>
+                <button
+                    className="btn-nuevo"
+                    onClick={() => setShowForm(true)}
+                >
+                    + Nuevo Responsable
+                </button>
+            </div>
 
-                <div className="table-card">
-                    <div className="table-header">
-                        <span className="table-title">Listado de Responsables</span>
-                        <span className="table-count">{responsables.length} registros</span>
-                    </div>
+            <div className="separator"></div>
 
-                    {responsables.length === 0 ? (
-                        <div className="empty-state">
-                            <div className="empty-icon">👨‍👩‍👧‍👦</div>
-                            <h3>No hay responsables registrados</h3>
-                            <p>Comienza agregando un nuevo responsable</p>
+            {/* Información de registros */}
+            <div className="registros-info">
+                <h2>Listado de Responsables</h2>
+                <span className="registros-count">| {filteredTutores.length} registros</span>
+            </div>
+
+            {/* Formulario de nuevo tutor */}
+            {showForm && (
+                <div className="form-overlay">
+                    <div className="form-container">
+                        <div className="form-header">
+                            <h3>Nuevo Responsable</h3>
+                            <button
+                                className="btn-cerrar"
+                                onClick={() => setShowForm(false)}
+                            >
+                                ×
+                            </button>
                         </div>
-                    ) : (
-                        <table className="styled-table">
-                            <thead>
-                                <tr>
-                                    <th>Nombre</th>
-                                    <th>Parentesco</th>
-                                    <th>Teléfono</th>
-                                    <th>Correo</th>
-                                    <th>Ocupación</th>
-                                    <th>Alumnos Asociados</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {responsables.map((responsable) => (
-                                    <tr key={responsable.id}>
-                                        <td>{responsable.nombreCompleto || '-'}</td>
-                                        <td>{responsable.parentesco || '-'}</td>
-                                        <td>{responsable.telefono || '-'}</td>
-                                        <td>{responsable.correo || '-'}</td>
-                                        <td>{responsable.ocupacion || '-'}</td>
-                                        <td>{responsable.alumnosAsociados || '0'}</td>
-                                        <td>
-                                            <div className="action-icons">
-                                                <span className="icon-edit">✏️</span>
-                                                <span className="icon-delete">🗑️</span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    )}
+                        <form onSubmit={handleCrearTutor}>
+                            <div className="form-group">
+                                <label>Nombre completo *</label>
+                                <input
+                                    type="text"
+                                    name="nombre"
+                                    value={nuevoTutor.nombre}
+                                    onChange={handleInputChange}
+                                    required
+                                />
+                            </div>
+
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>Ciudad</label>
+                                    <input
+                                        type="text"
+                                        name="ciudad"
+                                        value={nuevoTutor.ciudad}
+                                        onChange={handleInputChange}
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label>Teléfono</label>
+                                    <input
+                                        type="tel"
+                                        name="telefono"
+                                        value={nuevoTutor.telefono}
+                                        onChange={handleInputChange}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Parentesco</label>
+                                <select
+                                    name="parentesco"
+                                    value={nuevoTutor.parentesco}
+                                    onChange={handleInputChange}
+                                >
+                                    <option value="Padre/Madre">Padre/Madre</option>
+                                    <option value="Tutor">Tutor</option>
+                                    <option value="Abuelo/Abuela">Abuelo/Abuela</option>
+                                    <option value="Tío/Tía">Tío/Tía</option>
+                                    <option value="Hermano/Hermana">Hermano/Hermana</option>
+                                    <option value="Otro">Otro</option>
+                                </select>
+                            </div>
+
+                            <div className="form-actions">
+                                <button type="button" onClick={() => setShowForm(false)}>
+                                    Cancelar
+                                </button>
+                                <button type="submit" className="btn-primary">
+                                    Guardar Responsable
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-            </main>
+            )}
+
+            {/* Tabla de tutores */}
+            <div className="table-container">
+                <table className="responsables-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Ciudad</th>
+                            <th>Teléfono</th>
+                            <th>Parentesco</th>
+                            <th>Fecha Registro</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {filteredTutores.length === 0 ? (
+                            <tr>
+                                <td colSpan="7" className="no-data">
+                                    No se encontraron responsables
+                                </td>
+                            </tr>
+                        ) : (
+                            filteredTutores.map(tutor => (
+                                <tr key={tutor.id}>
+                                    <td className="id">{tutor.id}</td>
+                                    <td className="nombre">{tutor.nombre || 'N/A'}</td>
+                                    <td className="ciudad">{tutor.ciudad || 'N/A'}</td>
+                                    <td className="telefono">{tutor.telefono || 'N/A'}</td>
+                                    <td className="parentesco">
+                                        <span className="parentesco-badge">{tutor.parentesco}</span>
+                                    </td>
+                                    <td className="fecha">
+                                        {tutor.fecha_creacion ? new Date(tutor.fecha_creacion).toLocaleDateString() : 'N/A'}
+                                    </td>
+                                    <td className="acciones">
+                                        <button className="btn-editar" title="Editar">✏️</button>
+                                        <button
+                                            className="btn-eliminar"
+                                            title="Eliminar"
+                                            onClick={() => handleEliminarTutor(tutor.id)}
+                                        >
+                                            🗑️
+                                        </button>
+                                        <button className="btn-ver" title="Ver detalles">👁️</button>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
-}
+};
+
+export default Responsables;

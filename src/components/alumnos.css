@@ -1,185 +1,195 @@
-/* alumnos.css - Estilos completos para la página de Alumnos */
-
-.page-container {
-    font-family: "Inter", sans-serif;
-    background: #f5f7fa;
+.alumnos-container {
+    padding: 20px;
+    background-color: #f8f9fa;
     min-height: 100vh;
-    padding-top: 80px;
 }
 
-.content {
-    padding: 30px;
-    max-width: 1400px;
-    margin: 0 auto;
-}
-
-.header-section {
-    margin-bottom: 30px;
-}
-
-.main-title {
-    font-size: 28px;
-    font-weight: bold;
-    color: #1a1f36;
-    margin: 0;
-}
-
-.main-subtitle {
-    font-size: 16px;
-    color: #6b7280;
-    margin: 5px 0 0 0;
-}
-
-/* Barra de acciones */
-.actions-bar {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 25px;
-    align-items: center;
-}
-
-.search-input {
-    flex: 1;
-    padding: 12px 15px;
-    border-radius: 10px;
-    border: 1px solid #d0d7e2;
-    font-size: 14px;
-}
-
-.new-post-btn {
-    background: #1b73e8;
-    border: none;
-    color: white;
-    padding: 12px 24px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    white-space: nowrap;
-}
-
-.new-post-btn:hover {
-    background: #1557b0;
-}
-
-/* Tabla */
-.table-card {
+.alumnos-header {
     background: white;
-    border-radius: 12px;
-    padding: 25px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.table-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
 }
 
-.table-title {
-    font-size: 18px;
-    font-weight: bold;
-    color: #1a1f36;
+.alumnos-header h1 {
+    color: #2c3e50;
+    margin: 0 0 8px 0;
+    font-size: 24px;
 }
 
-.table-count {
+.alumnos-header p {
+    color: #7f8c8d;
+    margin: 0;
     font-size: 14px;
-    color: #6b7280;
 }
 
-.styled-table {
+.search-bar {
+    background: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 10px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #3498db;
+}
+
+.separator {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #ddd, transparent);
+    margin: 15px 0;
+}
+
+.registros-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.registros-info h2 {
+    color: #2c3e50;
+    margin: 0;
+    font-size: 18px;
+}
+
+.registros-count {
+    color: #7f8c8d;
+    font-size: 14px;
+}
+
+.table-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.alumnos-table {
     width: 100%;
     border-collapse: collapse;
-    background: white;
+}
+
+.alumnos-table th {
+    background-color: #34495e;
+    color: white;
+    padding: 12px 15px;
+    text-align: left;
+    font-weight: 600;
     font-size: 14px;
 }
 
-.styled-table th {
-    background: #f8fafc;
-    padding: 15px 12px;
-    text-align: left;
+.alumnos-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #ecf0f1;
+    font-size: 14px;
+}
+
+.alumnos-table tr:hover {
+    background-color: #f8f9fa;
+}
+
+.matricula {
     font-weight: 600;
-    color: #374151;
-    border-bottom: 2px solid #e5e7eb;
+    color: #2c3e50;
 }
 
-.styled-table td {
-    padding: 15px 12px;
-    border-bottom: 1px solid #e5e7eb;
-    color: #4b5563;
-}
-
-/* Estados vacíos */
-.empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: #6b7280;
-    font-style: italic;
-    font-size: 16px;
-}
-
-/* Badges de estado */
-.status-badge {
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 12px;
+.nombre {
     font-weight: 500;
 }
 
-.status-active {
-    background: #d1fae5;
-    color: #065f46;
+.edad {
+    color: #7f8c8d;
 }
 
-.status-inactive {
-    background: #fef3c7;
-    color: #92400e;
+.carrera {
+    color: #2c3e50;
 }
 
-.status-pending {
-    background: #e0e7ff;
-    color: #3730a3;
+.grupo {
+    display: block;
+    font-size: 12px;
+    color: #7f8c8d;
+    margin-top: 2px;
 }
 
-/* Acciones */
-.action-icons {
+.promedio {
+    font-weight: 600;
+    color: #27ae60;
+}
+
+.tutor {
+    color: #7f8c8d;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status-badge.active {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.acciones {
     display: flex;
-    gap: 10px;
+    gap: 5px;
 }
 
-.action-icons span {
+.btn-editar,
+.btn-eliminar,
+.btn-ver {
+    background: none;
+    border: none;
     cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.btn-editar:hover {
+    background-color: #e3f2fd;
+}
+
+.btn-eliminar:hover {
+    background-color: #ffebee;
+}
+
+.btn-ver:hover {
+    background-color: #f3e5f5;
+}
+
+.no-data {
+    text-align: center;
+    color: #7f8c8d;
+    padding: 40px !important;
+}
+
+.loading,
+.error {
+    text-align: center;
+    padding: 40px;
     font-size: 16px;
-    opacity: 0.7;
-    transition: opacity 0.2s;
 }
 
-.action-icons span:hover {
-    opacity: 1;
+.loading {
+    color: #3498db;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-    .content {
-        padding: 20px 15px;
-    }
-
-    .actions-bar {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .search-input,
-    .new-post-btn {
-        width: 100%;
-    }
-
-    .table-card {
-        overflow-x: auto;
-    }
-
-    .styled-table {
-        min-width: 800px;
-    }
+.error {
+    color: #e74c3c;
 }
